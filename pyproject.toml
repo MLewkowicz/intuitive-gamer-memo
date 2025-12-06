@@ -1,0 +1,10 @@
+[project]
+name = "intuitive-gamer-memo"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "memo-lang>=1.2.7",
+    "open-spiel>=1.6.9",
+]
