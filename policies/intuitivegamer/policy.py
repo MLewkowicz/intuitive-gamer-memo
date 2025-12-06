@@ -39,8 +39,8 @@ class IntuitiveGamerPolicy(GamePolicy):
         """Assumes OpenSpiel tic-tac-toe representation:  3×3×3 tensor, with channels [X,O,empty_or_turn]."""
         obs = np.array(state.observation_tensor()).reshape(self.game.observation_tensor_shape())
         # channel 0 = X, channel 1 = O (typical)
-        X = obs[:, :, 0]
-        O = obs[:, :, 1]
+        X = obs[2, :, :]
+        O = obs[1, :, :]
         # Represent board as 1=X, -1=O, 0=empty
         return X - O
 
