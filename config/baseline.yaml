@@ -16,4 +16,12 @@ policies:
     
   - name: "intuitive_gamer" 
     parameters: {}
+
+  - name: "mcts"
+    parameters:
+      simulations: 1000         # Number of MCTS simulations per move
+      exploration_constant: 1.4 # Exploration parameter for UCT
+      max_depth: 50             # Maximum depth for simulations
+      stochastic: false         # Whether to return deterministic or stochastic action likelihoods
+      
   

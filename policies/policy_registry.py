@@ -5,11 +5,13 @@ Evaluator registry for managing different evaluation metrics.
 from typing import Dict, Any
 from .intuitivegamer.policy import IntuitiveGamerPolicy
 from .random.policy import RandomPolicy
+from .mcts.policy import MCTSAgent
 
 # Registry of available evaluators
 POLICY_REGISTRY = {
     "intuitive_gamer": IntuitiveGamerPolicy,
     "random": RandomPolicy,
+    "mcts": MCTSAgent,
 }
 
 def get_policy(name: str):
