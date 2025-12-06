@@ -4,7 +4,7 @@ import pyspiel
 from typing import List, Dict, Any
 from policies.policy_registry import instantiate_policy, POLICY_REGISTRY
 import os
-from state_sampler.policy_registry import instantiate_sampler, SAMPLER_REGISTRY
+from state_sampler.sampler_registry import instantiate_sampler, SAMPLER_REGISTRY
 
 
 def load_game(game_config: Dict[str, Any]) -> pyspiel.Game:
