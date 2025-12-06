@@ -1,0 +1,19 @@
+---
+# Baseline Experiment Configuration
+experiment_name: "baseline_policy_comparison"
+description: "Compare different game policies on standard games"
+
+# Game settings
+game:
+  name: "tic_tac_toe"  # OpenSpiel game name
+  parameters: {}       # Game-specific parameters
+
+# Policies to evaluate
+policies:
+  - name: "random"
+    parameters:
+      seed: 42
+    
+  - name: "intuitive_gamer" 
+    parameters: {}
+  
