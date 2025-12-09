@@ -38,10 +38,13 @@ class Experiment():
             for (name_a, probs_a), (name_b, probs_b) in itertools.combinations_with_replacement(policy_probs.items(), 2):
                 
                 pair_key = (name_a, name_b)
+                if 'random' in pair_key:
+                    continue
+
                 if pair_key not in comparison_results:
                     comparison_results[pair_key] = {"agreements": 0, "totals": 0}
 
-                for a1, a2 in itertools.combinations_with_replacement(legal_actions, 2):
+                for a1, a2 in itertools.combinations(legal_actions, 2):
                     diff_a = probs_a.get(a1, 0.0) - probs_a.get(a2, 0.0)
                     diff_b = probs_b.get(a1, 0.0) - probs_b.get(a2, 0.0)
 

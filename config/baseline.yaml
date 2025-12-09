@@ -17,12 +17,12 @@ policies:
   - name: "intuitive_gamer" 
     parameters: {}
 
-  # - name: "mcts"
-  #   parameters:
-  #     iterations: 1000         # Number of MCTS simulations per move
-  #     exploration_weight: 1.4 # Exploration parameter for UCT
-  #     max_depth: 50             # Maximum depth for simulations
-  #     stochastic: false         # Whether to return deterministic or stochastic action likelihoods
+  - name: "mcts"
+    parameters:
+      iterations: 1000         # Number of MCTS simulations per move
+      exploration_weight: 1.4 # Exploration parameter for UCT
+      max_depth: 50             # Maximum depth for simulations
+      stochastic: false         # Whether to return deterministic or stochastic action likelihoods
       
   
 sampler:
@@ -33,5 +33,5 @@ sampler:
     - "lambda x: x['longest_chain_me'] > 0"
     - "lambda x: x['longest_chain_opp'] > 0"    
   sample:
-    k: 1000
+    k: 10000
     replace: false

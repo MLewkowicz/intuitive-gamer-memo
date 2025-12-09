@@ -136,7 +136,7 @@ def run_experiment(config: Dict[str, Any]) -> None:
         exp_two = experiment.run_pairwise_comparison()
         if exp_one:
             print("Visualizing results...")
-            visualize_agreement_heatmap([exp_one, exp_two], titles=["Max Action Disagreement", "Pairwise Action Agreement"])
+            visualize_agreement_heatmap([exp_one, exp_two], titles=["Max Action Agreement", "Pairwise Action Agreement"])
         else:
             print("No results to visualize")
     except Exception as e:
