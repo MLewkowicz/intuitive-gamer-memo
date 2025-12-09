@@ -17,18 +17,18 @@ policies:
   - name: "intuitive_gamer" 
     parameters: {}
 
-  - name: "mcts"
-    parameters:
-      iterations: 1000         # Number of MCTS simulations per move
-      exploration_weight: 1.4 # Exploration parameter for UCT
-      max_depth: 50             # Maximum depth for simulations
-      stochastic: false         # Whether to return deterministic or stochastic action likelihoods
+  # - name: "mcts"
+  #   parameters:
+  #     iterations: 1000         # Number of MCTS simulations per move
+  #     exploration_weight: 1.4 # Exploration parameter for UCT
+  #     max_depth: 50             # Maximum depth for simulations
+  #     stochastic: false         # Whether to return deterministic or stochastic action likelihoods
       
   
 sampler:
   predicates:
     - "lambda x: x['current_player'] in [1]"
-    - "lambda x: x['winning'] == True"
+    - "lambda x: x['winning'] in [True, False]"
     - "lambda x: x['num_turns'] > 0"
     - "lambda x: x['longest_chain_me'] > 0"
     - "lambda x: x['longest_chain_opp'] > 0"    

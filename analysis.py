@@ -35,13 +35,13 @@ class Experiment():
                 for name, p in self.policies.items()
             }
 
-            for (name_a, probs_a), (name_b, probs_b) in itertools.combinations(policy_probs.items(), 2):
+            for (name_a, probs_a), (name_b, probs_b) in itertools.combinations_with_replacement(policy_probs.items(), 2):
                 
                 pair_key = (name_a, name_b)
                 if pair_key not in comparison_results:
                     comparison_results[pair_key] = {"agreements": 0, "totals": 0}
 
-                for a1, a2 in itertools.combinations(legal_actions, 2):
+                for a1, a2 in itertools.combinations_with_replacement(legal_actions, 2):
                     diff_a = probs_a.get(a1, 0.0) - probs_a.get(a2, 0.0)
                     diff_b = probs_b.get(a1, 0.0) - probs_b.get(a2, 0.0)
 
@@ -72,7 +72,7 @@ class Experiment():
                 else:
                     policy_max_actions[name] = None
 
-            for (name_a, action_a), (name_b, action_b) in itertools.combinations(policy_max_actions.items(), 2):
+            for (name_a, action_a), (name_b, action_b) in itertools.combinations_with_replacement(policy_max_actions.items(), 2):
                 
                 pair_key = (name_a, name_b)
                 if pair_key not in comparison_results:

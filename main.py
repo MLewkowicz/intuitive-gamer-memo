@@ -130,7 +130,9 @@ def run_experiment(config: Dict[str, Any]) -> None:
 
     print("Running pairwise comparison...")
     try:
+        experiment = Experiment(policies, sampler)
         exp_one = experiment.run_max_action_disagreement()
+        experiment = Experiment(policies, sampler)
         exp_two = experiment.run_pairwise_comparison()
         if exp_one:
             print("Visualizing results...")
