@@ -8,6 +8,7 @@ from .random.policy import RandomPolicy
 from .mcts.policy import MCTSAgent
 from .intuitivegamer_depth_limited.policy import DepthLimitedIGPolicy
 
+
 # Registry of available evaluators
 POLICY_REGISTRY = {
     "intuitive_gamer": IntuitiveGamerPolicy,

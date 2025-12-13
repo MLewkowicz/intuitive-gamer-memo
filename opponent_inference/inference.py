@@ -64,10 +64,4 @@ def load_inference(config: Dict[str, Any], game) -> OpponentInference:
     method = config.get("method", "log_likelihood")
     candidate_policy_cfgs = config.get("candidate_policies", [])
     candidate_policies = load_policies(candidate_policy_cfgs, game, include_metadata=False)
-
-
-
-    # inference = OpponentInference(candidate_policies, method=method)
-    # print(f"✓ Loaded Opponent Inference with method: {method}")
-    # return inference
     return OpponentInference(candidate_policies, method=method)
