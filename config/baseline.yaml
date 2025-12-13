@@ -15,7 +15,29 @@ policies:
       seed: 42
     
   - name: "intuitive_gamer" 
-    parameters: {}
+    parameters:
+      opponent_inference:
+        enabled: true
+        method: "log_likelihood"  # or "agreement_count"
+        candidate_policies:
+          - name: "random"
+            parameters:
+              seed: 42
+          - name: "intuitive_gamer" 
+            parameters: {}
+          - name: "mcts"
+            parameters:
+              iterations: 1000         # Number of MCTS simulations per move
+              exploration_weight: 1.4 # Exploration parameter for UCT
+              max_depth: 50             # Maximum depth for simulations
+              stochastic: false         # Whether to return deterministic or stochastic action likelihoods
+        params:
+          # Method-specific parameters
+          log_likelihood:
+            smoothing: 0.01  # Add small epsilon to avoid log(0)
+          agreement_count:
+            threshold: 0.5   # Minimum prob to count as "agreement"
+
 
   - name: "mcts"
     parameters:
@@ -24,7 +46,8 @@ policies:
       max_depth: 50             # Maximum depth for simulations
       stochastic: false         # Whether to return deterministic or stochastic action likelihoods
       
-  
+
+
 sampler:
   predicates:
     - "lambda x: x['current_player'] in [-1, 1]"

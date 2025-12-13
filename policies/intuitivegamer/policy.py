@@ -29,10 +29,18 @@ def softmax(x):
 
 class IntuitiveGamerPolicy(GamePolicy):
 
-    def __init__(self, game, weights={'connect': 1.0, 'block': 1.0, 'center': 1.0}):
+    def __init__(self, game, weights={'connect': 1.0, 'block': 1.0, 'center': 1.0}, **kwargs):
         self.game = game
         self.weights = weights
         self.directions = [(1,0), (0,1), (1,1), (1,-1)]
+
+        opponent_inference_config = kwargs.get('opponent_inference', None)
+        self.opponent_inference = None
+        if opponent_inference_config and opponent_inference_config.get('enabled', False):
+            from opponent_inference.inference import load_inference
+            self.opponent_inference = load_inference(opponent_inference_config, self.game)
+
+        super().__init__(game)
 
     # ----- helpers -----
     def _apply_action(self, state, action):
@@ -112,12 +120,12 @@ class IntuitiveGamerPolicy(GamePolicy):
             n1 = self._uself(state, action)
             n2 = self._uopp(state, action)
             
-            # val = (self.weights['center'] * (1 - d)) + \
-            #       (self.weights['connect'] * n1) + \
-            #       (self.weights['block'] * n2)
-            # score = np.power(2, val)
+            val = (self.weights['center'] * (1 - d)) + \
+                  (self.weights['connect'] * n1) + \
+                  (self.weights['block'] * n2)
+            score = np.power(2, val)
 
-            score = np.power(2, (1 - d) + n1 + n2)
+            # score = np.power(2, (1 - d) + n1 + n2)
             likelihoods[action] = score
         
         values = np.array(list(likelihoods.values()))
@@ -128,11 +136,18 @@ class IntuitiveGamerPolicy(GamePolicy):
         return likelihoods
     
     def step(self, state):
+        if self.opponent_inference:
+            # Update opponent model based on action history
+            action_history = self.action_choices.get(1 - self.player_id, [])
+            inferred_likelihoods = self.opponent_inference.calculate_likelihoods(action_history)
+            # Here you could use inferred_likelihoods to adjust your strategy
+            # For simplicity, we are not integrating it into action selection in this example
+
         probs_dict = self.action_likelihoods(state)
         if not probs_dict:
             return None
             
         actions = list(probs_dict.keys())
         probs = list(probs_dict.values())
-        
+                
         return np.random.choice(actions, p=probs)
