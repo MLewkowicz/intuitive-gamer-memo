@@ -21,6 +21,20 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal"
-        }
+        },
+        {
+            "name": "Run Simulated Play Experiment",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/simulated_play.py",
+            "args": [
+                "-c",
+                "config/baseline.yaml"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "python": "${workspaceFolder}/.venv/bin/python"
+        },
     ]
 }

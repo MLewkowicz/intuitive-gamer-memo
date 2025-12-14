@@ -13,10 +13,27 @@ def softmax(x):
 
 class IntuitiveGamerPolicy(GamePolicy):
 
-    def __init__(self, game, weights={'connect': 1.0, 'block': 1.0, 'center': 1.0}):
-        self.game = game
+    def __init__(self, game, weights={'connect': 1.0, 'block': 1.0, 'center': 1.0}, **kwargs):
+        print(f"[DEBUG] IntuitiveGamerPolicy.__init__ called, id={id(self)}")
+        super().__init__(game)  # Call parent constructor first
         self.weights = weights
         self.directions = [(1,0), (0,1), (1,1), (1,-1)]
+        self.opponent_inference = None  # Will be injected later if needed
+        print(f"[DEBUG] opponent_inference initialized to None, will be injected later")
+
+        optimal_weights_config = kwargs.get("optimal_weights", [])
+        self.optimal_weights_dict = {
+            entry["name"]: entry["parameters"]
+            for entry in optimal_weights_config
+        }
+        self.eta = kwargs.get("eta", 0.5)  # Learning rate for weight updates
+
+    def set_opponent_inference(self, opponent_inference):
+        """Inject opponent inference after policy creation to avoid circular imports."""
+        self.opponent_inference = opponent_inference
+        print(f"[DEBUG] opponent_inference injected: {opponent_inference}")
+
+
 
     def _longest_chain_with_dirs(self, board, player_val, directions):
         """Calculates max chain for player_val restricted to specific directions."""
@@ -154,11 +171,34 @@ class IntuitiveGamerPolicy(GamePolicy):
         return likelihoods
     
     def step(self, state):
+        print(f"[DEBUG] step called, id={id(self)}, opponent_inference={self.opponent_inference}")
+        if self.opponent_inference:
+            # Update opponent model based on action history
+            action_history = self.action_choices.get(1 - self.player_id, [])
+            posterior = self.opponent_inference.calculate_likelihoods(action_history)
+            # Initialize averaged weights
+            avg_weights = {
+                k: 0.0
+                for k in next(iter(self.optimal_weights_dict.values())).keys()
+            }
+
+            # Weighted average
+            for policy_name, params in self.optimal_weights_dict.items():
+                p = posterior.get(policy_name, 0.0)
+                for param_name, value in params.items():
+                    avg_weights[param_name] += p * value
+
+            for k in self.weights:
+                self.weights[k] = (
+                    (1.0 - self.eta) * self.weights[k]
+                    + self.eta * avg_weights[k]
+                )
+
         probs_dict = self.action_likelihoods(state)
         if not probs_dict:
             return None
             
         actions = list(probs_dict.keys())
         probs = list(probs_dict.values())
-        
+                
         return np.random.choice(actions, p=probs)

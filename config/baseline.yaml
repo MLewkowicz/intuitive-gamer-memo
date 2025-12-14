@@ -29,16 +29,58 @@ policies:
       seed: 42
     
   - name: "intuitive_gamer" 
-    parameters: {}
-
+    parameters:
+      opponent_inference:
+        enabled: true
+        method: "log_likelihood"  # or "agreement_count"
+        candidate_policies:
+          - name: "random"
+            parameters:
+              seed: 42
+          - name: "intuitive_gamer" 
+            parameters: {}
+          - name: "mcts"
+            parameters:
+              iterations: 1000         # Number of MCTS simulations per move
+              exploration_weight: 1.4 # Exploration parameter for UCT
+              max_depth: 50             # Maximum depth for simulations
+              stochastic: false         # Whether to return deterministic or stochastic action likelihoods
+        params:
+          log_likelihood:
+            smoothing: 0.01  # Add small epsilon to avoid log(0)
+          agreement_count:
+            threshold: 0.5   # Minimum prob to count as "agreement"
+      optimal_weights:
+        - name: "random"
+          parameters:
+            connect: 1.5
+            block: 0.3
+            center: 1.5
+        - name: "intuitive_gamer" 
+          parameters:
+            connect: 0.9
+            block: 0.3
+            center: 0.3
+        - name: "mcts"
+          parameters:
+            connect: 1.5
+            block: 0.9
+            center: 1.5
+      eta: 0.5  # Learning rate for weight updates
   - name: "mcts"
     parameters:
+<<<<<<< HEAD
       iterations: 1000          # Number of MCTS simulations per move
       exploration_weight: 1.4   # Exploration parameter for UCT
+=======
+      iterations: 1000         # Number of MCTS simulations per move
+      exploration_weight: 1.4 # Exploration parameter for UCT
+>>>>>>> b7d6f3250a7accd7ed4085cd41efc2c9655af5db
       max_depth: 50             # Maximum depth for simulations
       stochastic: true          # Whether to return deterministic or stochastic action likelihoods
       
-  
+
+
 sampler:
   predicates:
     - "lambda x: x['current_player'] in [-1, 1]"

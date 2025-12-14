@@ -12,6 +12,8 @@ class GamePolicy(ABC):
     def __init__(self, game: pyspiel.Game):
         super().__init__()
         self.game = game
+        self.player_id = None  # To be set when the policy is assigned to a player
+        self.action_choices = {}  # Track action choices per player
 
     @abstractmethod
     def action_likelihoods(self, state: pyspiel.State) -> Dict[int, float]:
@@ -20,3 +22,11 @@ class GamePolicy(ABC):
     @abstractmethod
     def step(self, state: pyspiel.State) -> int:
         pass
+
+    def assign_playerid(self, id: int):
+        self.player_id = id
+
+
+    def update_action_choices(self, action:int, state: pyspiel.State, player: int) -> int:
+        self.action_choices.setdefault(player, [])
+        self.action_choices[player].append((state, action))

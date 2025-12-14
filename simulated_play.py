@@ -1,63 +1,14 @@
 import argparse
 import yaml
 import numpy as np
-import pyspiel
 import pandas as pd
 import itertools
-from typing import List, Dict, Any
+import copy
 
-from policies.policy_registry import POLICY_REGISTRY, instantiate_policy
 from policies.intuitivegamer.policy import IntuitiveGamerPolicy
+from utils.utils import load_game, load_policies, build_sampler
 
-def load_game(game_config: Dict[str, Any]) -> pyspiel.Game:
-    """Load and initialize a game from configuration."""
-    game_name = game_config["name"]
-    game_params = game_config.get("parameters", {})
-    
-    try:
-        if game_params:
-            game = pyspiel.load_game(game_name, game_params)
-        else:
-            game = pyspiel.load_game(game_name)
-        print(f"✓ Loaded game: {game_name}")
-        return game
-    except Exception as e:
-        raise RuntimeError(f"Failed to load game '{game_name}': {e}")
 
-def load_policies(policies_config: List[Dict[str, Any]], game: pyspiel.Game) -> Dict[str, Any]:
-    """Load and initialize policies from configuration."""
-    policies = {}
-    print(f"Loading opponent policies from config:")
-    
-    for i, policy_config in enumerate(policies_config):
-        try:
-            # Add the game parameter to policy config
-            policy_config_with_game = policy_config.copy()
-            if "parameters" not in policy_config_with_game:
-                policy_config_with_game["parameters"] = {}
-            policy_config_with_game["parameters"]["game"] = game
-            
-            policy = instantiate_policy(policy_config_with_game)
-            policy_name = policy_config["name"]
-            
-            # Handle duplicate names in config (e.g. two mcts agents)
-            policy_id = policy_name
-            count = 1
-            while policy_id in policies:
-                policy_id = f"{policy_name}_{count}"
-                count += 1
-        
-            policies[policy_id] = policy
-            print(f"  ✓ Loaded Opponent: {policy_id}")
-            
-        except Exception as e:
-            print(f"  ✗ Failed to load policy '{policy_config.get('name')}': {e}")
-            continue
-    
-    if not policies:
-        raise RuntimeError("No opponent policies were successfully loaded.")
-    
-    return policies
 
 def get_random_start_states(game, num_states=50, max_random_moves=6):
     """Generates a list of valid, non-terminal starting states."""
@@ -98,6 +49,8 @@ def play_match(game, state, bot1, bot2):
     p2_id = 1 - p1_id
     
     bots = {p1_id: bot1, p2_id: bot2}
+    bot1.assign_playerid(p1_id)
+    bot2.assign_playerid(p2_id)
     
     while not curr_state.is_terminal():
         current_player = curr_state.current_player()
@@ -108,6 +61,9 @@ def play_match(game, state, bot1, bot2):
             action = bot.step(curr_state)
         else:
             raise NotImplementedError(f"Policy {type(bot)} must implement .step(state)")
+
+        for bot in bots.values():
+            bot.update_action_choices(action, copy.deepcopy(curr_state), current_player)
 
         curr_state.apply_action(action)
     
