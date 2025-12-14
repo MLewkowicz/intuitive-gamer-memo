@@ -8,5 +8,7 @@ dependencies = [
     "matplotlib>=3.10.7",
     "memo-lang>=1.2.7",
     "open-spiel>=1.6.9",
+    "pandas>=2.3.3",
     "seaborn>=0.13.2",
+    "tqdm>=4.67.1",
 ]

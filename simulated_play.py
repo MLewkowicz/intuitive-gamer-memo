@@ -82,12 +82,16 @@ def get_random_start_states(game, num_states=50, max_random_moves=6):
             states.append(state.clone())
         else:
             states.append(game.new_initial_state())
-    return states
+            
+    # Note: Returning states generated above. 
+    # If you prefer empty states for fair comparison, uncomment the line below.
+    # return states 
+    return [game.new_initial_state()] * 50
 
 def play_match(game, state, bot1, bot2):
     """
     Plays a game starting from 'state' between bot1 (current player) and bot2 (next).
-    Returns return for bot1.
+    Returns (return for bot1, total_moves_played).
     """
     curr_state = state.clone()
     p1_id = curr_state.current_player()
@@ -99,23 +103,22 @@ def play_match(game, state, bot1, bot2):
         current_player = curr_state.current_player()
         bot = bots[current_player]
         
-        # Determine if bot has a 'step' method or needs a wrapper
+        # Determine if bot has a 'step' method
         if hasattr(bot, 'step'):
             action = bot.step(curr_state)
         else:
-            # Fallback if policy doesn't have step (shouldn't happen with new base)
             raise NotImplementedError(f"Policy {type(bot)} must implement .step(state)")
 
         curr_state.apply_action(action)
-        
-    return curr_state.returns()[p1_id]
+    
+    # Return result AND the total move count (game length)
+    return curr_state.returns()[p1_id], curr_state.move_number()
 
 def run_parameter_search(config):
     # 1. Load Game
     game = load_game(config["game"])
     
     # 2. Load Opponents from Config
-    # These are the static opponents we evaluate against (e.g. MCTS, Random, BaseIG)
     opponents = load_policies(config["policies"], game)
     
     # 3. Generate Evaluation Set
@@ -124,7 +127,6 @@ def run_parameter_search(config):
     
     # 4. Define Weight Grid
     print("Initializing parameter grid...")
-    # 0.0 to 2.0 in 0.2 increments
     weight_range = [round(x, 1) for x in np.arange(0.0, 2.1, 0.2)]
     combinations = list(itertools.product(weight_range, repeat=3))
     
@@ -154,22 +156,35 @@ def run_parameter_search(config):
             wins = 0
             losses = 0
             draws = 0
+            win_turns = []  # List to store turn counts for wins
+            loss_turns = [] # List to store turn counts for losses
             
             for state in eval_states:
-                outcome = play_match(game, state, challenger_bot, opp_bot)
+                outcome, turns = play_match(game, state, challenger_bot, opp_bot)
                 
-                if outcome > 0: wins += 1
-                elif outcome < 0: losses += 1
-                else: draws += 1
+                if outcome > 0: 
+                    wins += 1
+                    win_turns.append(turns)
+                elif outcome < 0: 
+                    losses += 1
+                    loss_turns.append(turns)
+                else: 
+                    draws += 1
             
             total = wins + losses + draws
             win_rate = wins / total if total > 0 else 0.0
+            
+            # Calculate Averages
+            avg_win_turns = np.mean(win_turns) if win_turns else 0.0
+            avg_loss_turns = np.mean(loss_turns) if loss_turns else 0.0
             
             # Store stats for this opponent
             row[f"win_rate_vs_{opp_name}"] = win_rate
             row[f"wins_vs_{opp_name}"] = wins
             row[f"losses_vs_{opp_name}"] = losses
             row[f"draws_vs_{opp_name}"] = draws
+            row[f"avg_turns_win_vs_{opp_name}"] = round(avg_win_turns, 2)
+            row[f"avg_turns_loss_vs_{opp_name}"] = round(avg_loss_turns, 2)
             
         results.append(row)
 
@@ -196,13 +211,15 @@ def main():
         
         print("\nSearch Complete.")
         
-        # Dynamic print of top results based on first opponent found (usually random or mcts)
-        first_opp = list(results_df.columns)[0].split('_vs_')[-1] # extract name
-        col_name = f"win_rate_vs_{first_opp}"
-        
-        if col_name in results_df.columns:
+        # Dynamic print of top results based on first opponent found
+        if not results_df.empty:
+            first_opp_col = [c for c in results_df.columns if "win_rate_vs_" in c][0]
+            first_opp = first_opp_col.split('_vs_')[-1]
+            
             print(f"\nTop 5 configurations vs {first_opp}:")
-            print(results_df.sort_values(col_name, ascending=False).head(5))
+            # Show win rate and avg turns to win
+            cols_to_show = [first_opp_col, f"avg_turns_win_vs_{first_opp}"]
+            print(results_df.sort_values(first_opp_col, ascending=False).head(5)[cols_to_show])
 
         results_df.to_csv(args.output)
         print(f"\nResults saved to '{args.output}'")

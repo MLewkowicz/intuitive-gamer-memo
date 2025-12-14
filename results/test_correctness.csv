@@ -1,0 +1,2 @@
+w_connect,w_block,w_center,win_rate_vs_random,wins_vs_random,losses_vs_random,draws_vs_random,win_rate_vs_intuitive_gamer,wins_vs_intuitive_gamer,losses_vs_intuitive_gamer,draws_vs_intuitive_gamer,win_rate_vs_mcts,wins_vs_mcts,losses_vs_mcts,draws_vs_mcts
+0.0,0.0,0.0,0.62,31,13,6,0.34,17,27,6,0.0,0,44,6

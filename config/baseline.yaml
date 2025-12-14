@@ -4,9 +4,23 @@ experiment_name: "baseline_policy_comparison"
 description: "Compare different game policies on standard games"
 
 # Game settings
+# game:
+#   name: "tic_tac_toe"  # OpenSpiel game name
+#   parameters: {}       # Game-specific parameters
+
+# VARIANT 2: Restricted Diagonals (4x4 Board)
+# Player 0 cannot win on diagonals (only horizontal/vertical)
+# Player 1 can win any way
 game:
-  name: "tic_tac_toe"  # OpenSpiel game name
-  parameters: {}       # Game-specific parameters
+  name: "mnk_game"
+  parameters:
+    m: 4
+    n: 4
+    k: 3
+    rules:
+      allowed_directions:
+        0: ["h", "v"]             # P0 restricted
+        1: ["h", "v", "d1", "d2"] # P1 standard
 
 # Policies to evaluate
 policies:
@@ -19,10 +33,10 @@ policies:
 
   - name: "mcts"
     parameters:
-      iterations: 10000         # Number of MCTS simulations per move
+      iterations: 1000          # Number of MCTS simulations per move
       exploration_weight: 1.4   # Exploration parameter for UCT
       max_depth: 50             # Maximum depth for simulations
-      stochastic: false         # Whether to return deterministic or stochastic action likelihoods
+      stochastic: true          # Whether to return deterministic or stochastic action likelihoods
       
   
 sampler:
@@ -35,3 +49,44 @@ sampler:
   sample:
     k: 1000
     replace: false
+
+
+# # VARIANT 1: Asymmetric Win Lengths (5x5 Board)
+# # Player 0 needs 4 in a row (K+1)
+# # Player 1 needs 3 in a row (Standard K)
+# game:
+#   name: "mnk_game"
+#   parameters:
+#     m: 5
+#     n: 5
+#     k: 3 # Base K
+#     rules:
+#       p0_extra_k: 1 # Adds 1 to base K for Player 0
+
+# ---
+# # VARIANT 2: Restricted Diagonals (4x4 Board)
+# # Player 0 cannot win on diagonals (only horizontal/vertical)
+# # Player 1 can win any way
+# game:
+#   name: "mnk_game"
+#   parameters:
+#     m: 4
+#     n: 4
+#     k: 3
+#     rules:
+#       allowed_directions:
+#         0: ["h", "v"]         # P0 restricted
+#         1: ["h", "v", "d1", "d2"] # P1 standard
+
+# ---
+# # VARIANT 3: Asymmetric Opening (5x5 Board)
+# # Player 1 (the second player) gets to place 2 pieces on their first turn
+# game:
+#   name: "mnk_game"
+#   parameters:
+#     m: 5
+#     n: 5
+#     k: 4
+#     rules:
+#       opening_moves:
+#         1: 2 # Player 1 gets 2 moves on turn 1

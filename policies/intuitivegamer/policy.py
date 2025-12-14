@@ -5,22 +5,6 @@ from typing import Dict
 
 DIRECTIONS = [(1,0),(0,1),(1,1),(1,-1)]  # h,v,diag,anti
 
-def longest_chain(board, player):
-    """Return max contiguous stones for `player` on board."""
-    best = 0
-    rows, cols = board.shape
-    for r in range(rows):
-        for c in range(cols):
-            if board[r, c] != player: 
-                continue
-            for dr, dc in DIRECTIONS:
-                length = 1
-                rr, cc = r + dr, c + dc
-                while 0 <= rr < rows and 0 <= cc < cols and board[rr, cc] == player:
-                    length += 1
-                    rr += dr; cc += dc
-                best = max(best, length)
-    return best
 
 
 def softmax(x):
@@ -34,6 +18,23 @@ class IntuitiveGamerPolicy(GamePolicy):
         self.weights = weights
         self.directions = [(1,0), (0,1), (1,1), (1,-1)]
 
+    def _longest_chain_with_dirs(self, board, player_val, directions):
+        """Calculates max chain for player_val restricted to specific directions."""
+        best = 0
+        rows, cols = board.shape
+        for r in range(rows):
+            for c in range(cols):
+                if board[r, c] != player_val: continue
+                
+                for dr, dc in directions:
+                    length = 1
+                    rr, cc = r + dr, c + dc
+                    while 0 <= rr < rows and 0 <= cc < cols and board[rr, cc] == player_val:
+                        length += 1
+                        rr += dr; cc += dc
+                    best = max(best, length)
+        return best
+    
     # ----- helpers -----
     def _apply_action(self, state, action):
         nxt = state.clone()
@@ -41,7 +42,6 @@ class IntuitiveGamerPolicy(GamePolicy):
         return nxt
     
     def _extract_board(self, state):
-        """Assumes OpenSpiel tic-tac-toe representation:  3×3×3 tensor, with channels [X,O,empty_or_turn]."""
         # For terminal states or when we need a specific player's view
         if state.is_terminal():
             # Use player 0's observation for terminal states
@@ -61,6 +61,19 @@ class IntuitiveGamerPolicy(GamePolicy):
         # Represent board as 1=X, -1=O, 0=empty
         return X - O
 
+    def _get_game_info(self, player_id):
+        """Helper to safely fetch rules from the game instance."""
+        # Defaults
+        k = 3
+        dirs = [(1,0), (0,1), (1,1), (1,-1)]
+        
+        if hasattr(self.game, "get_win_length"):
+            k = self.game.get_win_length(player_id)
+        if hasattr(self.game, "get_valid_directions"):
+            dirs = self.game.get_valid_directions(player_id)
+            
+        return k, dirs
+    
     def _uaux(self, state: pyspiel.State, action: int) -> float:
         """Compute auxiliary utility for a given action based on auxiliary utility defined in intuitive gamer paper."""
 
@@ -72,37 +85,50 @@ class IntuitiveGamerPolicy(GamePolicy):
         dist_to_center = np.linalg.norm(loc - center)/(np.linalg.norm(center))    
         return dist_to_center
     
-    def _uself(self, state: pyspiel.State, action: int) -> float:
-        """Compute the self utility for a given action to ensure that the agent wins as quickly as possible."""
-        cur_player = state.current_player()
-        nxt_state = self._apply_action(state, action)
-        board = self._extract_board(nxt_state)
-
-        me = 1 if cur_player == 0 else -1
-
-        longest_me = longest_chain(board, me)
-
-        if nxt_state.is_terminal() and nxt_state.returns()[cur_player] > 0:
-            longest_me += 1
+    def _uself(self, state, action):
+        p_id = state.current_player()
+        nxt = self._apply_action(state, action)
         
-        return float(longest_me)
+        # 1. Immediate Win Check
+        # Pyspiel returns are relative to players. 
+        if nxt.is_terminal() and nxt.returns()[p_id] > 0:
+            return 10.0 # Max reward
+            
+        # 2. Heuristic Progress
+        # Get target K and allowed directions for ME
+        target_k, valid_dirs = self._get_game_info(p_id)
+        
+        board = self._extract_board(state)
+        shape = self.game.observation_tensor_shape()
+        r, c = action // shape[2], action % shape[2]
+        board[r, c] = 1
+        
+        longest = self._longest_chain_with_dirs(board, 1, valid_dirs)
+        
+        return float(min(longest, target_k))
 
     # ----- opponent utility -----
-    def _uopp(self, state, action: int) -> float:
-        cur_player = state.current_player()
-        nxt = self._apply_action(state, action)
-        board = self._extract_board(nxt)
-
-        me = 1 if cur_player == 0 else -1
-        opp = -me
-
-        longest_opp = longest_chain(board, opp)
-
-        opp_wins = nxt.is_terminal() and nxt.returns()[1-cur_player] > 0
-        if opp_wins:
+    def _uopp(self, state, action):
+        p_id = state.current_player()
+        opp_id = 1 - p_id
+        
+        # Get target K and allowed directions for OPPONENT
+        opp_k, opp_dirs = self._get_game_info(opp_id)
+        
+        board = self._extract_board(state)
+        shape = self.game.observation_tensor_shape()
+        r, c = action // shape[2], action % shape[2]
+        
+        # Simulate opponent playing here
+        board[r, c] = -1 
+        
+        longest_opp = self._longest_chain_with_dirs(board, -1, opp_dirs)
+        
+        # Dynamic blocking threshold: 
+        # If opponent reaches their K, it's a critical block.
+        if longest_opp >= opp_k:
             return float(longest_opp)
-
-        # otherwise subtract 0.5
+        
         return float(longest_opp - 0.5)
 
     def action_likelihoods(self, state: pyspiel.State) -> Dict[int, float]:
@@ -112,12 +138,12 @@ class IntuitiveGamerPolicy(GamePolicy):
             n1 = self._uself(state, action)
             n2 = self._uopp(state, action)
             
-            # val = (self.weights['center'] * (1 - d)) + \
-            #       (self.weights['connect'] * n1) + \
-            #       (self.weights['block'] * n2)
-            # score = np.power(2, val)
+            val = (self.weights['center'] * (1 - d)) + \
+                  (self.weights['connect'] * n1) + \
+                  (self.weights['block'] * n2)
+            score = np.power(2, val)
 
-            score = np.power(2, (1 - d) + n1 + n2)
+            # score = np.power(2, (1 - d) + n1 + n2)
             likelihoods[action] = score
         
         values = np.array(list(likelihoods.values()))
