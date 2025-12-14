@@ -14,24 +14,24 @@ description: "Compare different game policies on standard games"
 game:
   name: "mnk_game"
   parameters:
-    m: 4
-    n: 4
+    m: 3
+    n: 3
     k: 3
     rules:
       allowed_directions:
-        0: ["h", "v"]             # P0 restricted
+        0: ["h", "v", "d1", "d2"]             # P0 restricted
         1: ["h", "v", "d1", "d2"] # P1 standard
 
 # Policies to evaluate
 policies:
-  - name: "random"
-    parameters:
-      seed: 42
+  # - name: "random"
+  #   parameters:
+  #     seed: 42
     
   - name: "intuitive_gamer" 
     parameters:
       opponent_inference:
-        enabled: true
+        enabled: false
         method: "log_likelihood"  # or "agreement_count"
         candidate_policies:
           - name: "random"
@@ -69,13 +69,8 @@ policies:
       eta: 0.5  # Learning rate for weight updates
   - name: "mcts"
     parameters:
-<<<<<<< HEAD
-      iterations: 1000          # Number of MCTS simulations per move
-      exploration_weight: 1.4   # Exploration parameter for UCT
-=======
       iterations: 1000         # Number of MCTS simulations per move
       exploration_weight: 1.4 # Exploration parameter for UCT
->>>>>>> b7d6f3250a7accd7ed4085cd41efc2c9655af5db
       max_depth: 50             # Maximum depth for simulations
       stochastic: true          # Whether to return deterministic or stochastic action likelihoods
       
@@ -84,8 +79,8 @@ policies:
 sampler:
   predicates:
     - "lambda x: x['current_player'] in [-1, 1]"
-    - "lambda x: x['winning'] in [True]"
-    - "lambda x: x['num_turns'] <= 3"
+    - "lambda x: x['winning'] in [True, False]"
+    - "lambda x: x['num_turns'] >= 6"
     - "lambda x: x['longest_chain_me'] > 0"
     - "lambda x: x['longest_chain_opp'] > 0"    
   sample:

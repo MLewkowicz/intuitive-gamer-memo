@@ -70,18 +70,26 @@ class Experiment():
                 
                 if probs:
                     best_action = max(probs, key=probs.get)
-                    policy_max_actions[name] = best_action
+                    policy_max_actions[name] = (best_action, state)
                 else:
                     policy_max_actions[name] = None
 
-            for (name_a, action_a), (name_b, action_b) in itertools.combinations_with_replacement(policy_max_actions.items(), 2):
-                
+            for (name_a, sa_a), (name_b, sa_b) in itertools.combinations_with_replacement(policy_max_actions.items(), 2):
+                action_a, state = sa_a if sa_a else (None, None)
+                action_b, _ = sa_b if sa_b else (None, None)
                 pair_key = (name_a, name_b)
                 if pair_key not in comparison_results:
                     comparison_results[pair_key] = {"agreements": 0, "totals": 0}
 
                 if action_a == action_b:
                     comparison_results[pair_key]["agreements"] += 1
+                else:
+                    print("----")
+                    print(state)
+                    print(state.current_player())
+                    print(name_a, action_a)
+                    print(name_b, action_b)
+                    print("----")
                 comparison_results[pair_key]["totals"] += 1
         return comparison_results
 
