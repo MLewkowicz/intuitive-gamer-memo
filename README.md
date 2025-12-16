@@ -51,7 +51,7 @@ Policy agreement analysis compares how different game-playing policies make deci
 ### Basic Usage
 
 ```bash
-python policy_agreement.py --config config/baseline.yaml
+uv run policy_agreement.py --config config/baseline.yaml
 ```
 
 ### Sample Configuration
@@ -92,7 +92,7 @@ Simulated play runs actual games between two policies and collects outcome stati
 ### Basic Usage
 
 ```bash
-python simulated_play.py --config config/simulation_example.yaml
+uv run simulated_play.py --config config/simulation_example.yaml
 ```
 
 ### Sample Configuration
