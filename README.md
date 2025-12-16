@@ -5,6 +5,7 @@
 - [Running Simulated Play](#running-simulated-play)
 - [Configuration Files](#configuration-files)
 - [Project Structure](#project-structure)
+- [Getting Access to the Data](#Data)
 
 ## Setup
 
@@ -131,6 +132,9 @@ games:
 - Tracks win rates, game lengths, and other statistics
 - Optionally tracks posterior probabilities for opponent inference
 - Generates plots and saves results to CSV files
+
+## Data
+Note that compiling all viable states for larger games takes significant computation time (~1 hr), therefore we have curated a publicly available dataset of pkl files containing all viable states and filters across various game variants. [Gdrive](https://drive.google.com/drive/folders/1K5HbC1fhOenjo-CQ8yPodqJu4bVCq0X0?usp=sharing)
 
 ## Configuration Files
 
